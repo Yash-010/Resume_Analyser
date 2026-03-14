@@ -1,0 +1,281 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Analysis Results - Resume Matcher</title>
+    
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    
+    <!-- Bootstrap CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    
+    <!-- FontAwesome -->
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    
+    <!-- Custom CSS -->
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+</head>
+<body class="bg-gray-50 pb-5">
+
+<!-- Minimal Navbar -->
+<nav class="navbar navbar-expand-lg bg-white shadow-sm py-3 mb-5">
+    <div class="container">
+        <a class="navbar-brand fw-bold text-primary" href="/">
+            <i class="fas fa-bolt text-warning me-2"></i>AI Resume Matcher
+        </a>
+        <a href="/" class="btn btn-light rounded-pill px-4 fw-medium border">
+            <i class="fas fa-arrow-left me-2"></i> New Analysis
+        </a>
+    </div>
+</nav>
+
+<div class="container">
+    <div class="text-center mb-5 fade-in-up">
+        <h1 class="display-5 fw-bold text-dark mb-3">Compare Multiple Resumes — Full Analysis</h1>
+        <p class="lead text-muted max-w-700 mx-auto">Each resume was analyzed against the same job description. Below: a quick comparison table, then a detailed breakdown (score, matched/missing skills, structure, and AI suggestions) for every candidate.</p>
+    </div>
+
+    {% if results %}
+    <!-- Comparison table: all resumes at a glance -->
+    <div class="card border-0 rounded-4 shadow-sm mb-5 fade-in-up overflow-hidden">
+        <div class="card-header bg-white border-0 py-3 px-4">
+            <h2 class="h5 fw-bold mb-0 text-dark"><i class="fas fa-table me-2 text-primary"></i>Comparison at a glance</h2>
+        </div>
+        <div class="table-responsive">
+            <table class="table table-hover align-middle mb-0">
+                <thead class="table-light">
+                    <tr>
+                        <th class="ps-4">Rank</th>
+                        <th>Candidate / file</th>
+                        <th class="text-center">Score</th>
+                        <th class="text-center">Matched</th>
+                        <th class="text-center">Missing</th>
+                        <th class="pe-4">Verdict</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for res in results %}
+                    <tr data-score-category-row="{% if res.score >= 75 %}excellent{% elif res.score >= 50 %}good{% else %}needs-work{% endif %}">
+                        <td class="ps-4 fw-bold">#{{ res.rank }}</td>
+                        <td class="text-break">{{ res.filename }}</td>
+                        <td class="text-center">
+                            <span class="badge rounded-pill {% if res.score >= 75 %}bg-success{% elif res.score >= 50 %}bg-warning text-dark{% else %}bg-danger{% endif %}">{{ res.score | int }}%</span>
+                        </td>
+                        <td class="text-center">{{ res.matched_skills | length }}</td>
+                        <td class="text-center">{{ res.missing_skills | length }}</td>
+                        <td class="pe-4 small">
+                            {% if res.score >= 75 %}Excellent match
+                            {% elif res.score >= 50 %}Good potential
+                            {% else %}Needs work{% endif %}
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <h2 class="h5 fw-bold text-dark mb-3 fade-in-up"><i class="fas fa-file-alt me-2 text-primary"></i>Detailed analysis per candidate</h2>
+    <!-- High-level summary + filters -->
+    <div class="d-flex flex-column flex-lg-row justify-content-between align-items-lg-center gap-3 mb-4 fade-in-up delay-1">
+        <div class="bg-white border rounded-4 px-4 py-3 d-flex flex-wrap gap-4 align-items-center shadow-sm">
+            <div>
+                <div class="text-muted text-uppercase small fw-semibold">Resumes analyzed</div>
+                <div class="fs-4 fw-bold">{{ results|length }}</div>
+            </div>
+            <div>
+                <div class="text-muted text-uppercase small fw-semibold">Top score</div>
+                <div class="fs-4 fw-bold">{{ results[0].score | int }}%</div>
+            </div>
+            <div>
+                <div class="text-muted text-uppercase small fw-semibold">Average score</div>
+                <div class="fs-4 fw-bold">
+                    {{
+                        (results | sum(attribute='score') / (results|length))
+                        | round(1)
+                    }}%
+                </div>
+            </div>
+        </div>
+
+        <div class="d-flex flex-wrap gap-2">
+            <button class="btn btn-outline-primary rounded-pill px-3 py-2 active"
+                    type="button"
+                    data-filter="all">
+                All
+            </button>
+            <button class="btn btn-outline-success rounded-pill px-3 py-2"
+                    type="button"
+                    data-filter="excellent">
+                Excellent matches (75%+)
+            </button>
+            <button class="btn btn-outline-warning rounded-pill px-3 py-2"
+                    type="button"
+                    data-filter="good">
+                Good potential (50–74%)
+            </button>
+            <button class="btn btn-outline-danger rounded-pill px-3 py-2"
+                    type="button"
+                    data-filter="needs-work">
+                Needs work (&lt;50%)
+            </button>
+        </div>
+    </div>
+    {% endif %}
+
+    <!-- Job Description Accordion -->
+    <div class="accordion mb-5 shadow-sm rounded-4 overflow-hidden fade-in-up delay-1 border-0" id="jdAccordion">
+        <div class="accordion-item border-0">
+            <h2 class="accordion-header" id="headingOne">
+                <button class="accordion-button collapsed bg-white fw-bold text-primary px-4 py-3" type="button" data-bs-toggle="collapse" data-bs-target="#collapseOne" aria-expanded="false" aria-controls="collapseOne">
+                    <i class="fas fa-file-alt me-2"></i> View Target Job Description
+                </button>
+            </h2>
+            <div id="collapseOne" class="accordion-collapse collapse" aria-labelledby="headingOne" data-bs-parent="#jdAccordion">
+                <div class="accordion-body bg-light text-secondary lh-lg p-4 font-monospace small" style="white-space: pre-wrap;">
+{{ job_description }}
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Iterating through results -->
+    <div class="row">
+        {% for res in results %}
+        <div class="col-12 mb-5 fade-in-up" style="animation-delay: {{ loop.index0 * 0.1 + 0.2 }}s;">
+            <div class="card resume-card border-0 rounded-4 overflow-hidden h-100 position-relative"
+                 data-score-category="{% if res.score >= 75 %}excellent{% elif res.score >= 50 %}good{% else %}needs-work{% endif %}">
+                
+                <!-- Rank ribbon -->
+                <div class="rank-ribbon {% if loop.index == 1 %}gold{% elif loop.index == 2 %}silver{% elif loop.index == 3 %}bronze{% else %}standard{% endif %}">
+                    #{{ res.rank }}
+                </div>
+
+                <div class="card-body p-0">
+                    <div class="row g-0">
+                        <!-- Left Panel (Score & Main Info) -->
+                        <div class="col-lg-4 bg-primary-gradient p-5 text-white d-flex flex-column justify-content-center align-items-center text-center">
+                            <i class="fas fa-file-invoice fa-3x mb-3 text-white-50"></i>
+                            <h3 class="fw-bold mb-1 text-break w-100">{{ res.filename }}</h3>
+                            <p class="text-white-50 small fw-medium text-uppercase tracking-wide mb-4">Candidate File</p>
+                            
+                            <!-- Circular Score -->
+                            <div class="score-circle-wrapper mb-3">
+                                <div class="score-circle {% if res.score >= 75 %}excellent{% elif res.score >= 50 %}good{% else %}poor{% endif %}">
+                                    <span class="score-number">{{ res.score | int }}<small>%</small></span>
+                                </div>
+                            </div>
+                            <span class="badge bg-white text-dark rounded-pill px-3 py-2 fw-bold">
+                                {% if res.score >= 75 %}🔥 Excellent Match
+                                {% elif res.score >= 50 %}👍 Good Potential
+                                {% else %}⚠️ Needs Work{% endif %}
+                            </span>
+                        </div>
+
+                        <!-- Right Panel (Detailed Analysis) -->
+                        <div class="col-lg-8 p-5 bg-white">
+                            
+                            <div class="row g-4 mb-4">
+                                <!-- Skills -->
+                                <div class="col-md-6">
+                                    <h5 class="fw-bold text-dark mb-3"><i class="fas fa-check-double text-success me-2"></i>Matched Skills</h5>
+                                    <div class="d-flex flex-wrap gap-2">
+                                        {% for skill in res.matched_skills %}
+                                            <span class="modern-badge badge-success">{{ skill }}</span>
+                                        {% else %}
+                                            <span class="text-muted small italic">No significant skills matched.</span>
+                                        {% endfor %}
+                                    </div>
+                                </div>
+                                <div class="col-md-6">
+                                    <h5 class="fw-bold text-dark mb-3"><i class="fas fa-exclamation-triangle text-danger me-2"></i>Missing Skills</h5>
+                                    <div class="d-flex flex-wrap gap-2">
+                                        {% for skill in res.missing_skills %}
+                                            <span class="modern-badge badge-danger">{{ skill }}</span>
+                                        {% else %}
+                                            <span class="text-muted small italic">All core skills appear to be present.</span>
+                                        {% endfor %}
+                                    </div>
+                                </div>
+                            </div>
+
+                            <hr class="border-light my-4">
+
+                            <div class="row g-4">
+                                <!-- Section Analysis -->
+                                <div class="col-md-5">
+                                    <h5 class="fw-bold text-dark mb-3"><i class="fas fa-layer-group text-primary me-2"></i>Structure</h5>
+                                    <div class="section-grid">
+                                        {% for section, status in res.sections.items() %}
+                                        <div class="section-item">
+                                            <span class="section-name text-secondary fw-medium">{{ section.replace(' Section', '') }}</span>
+                                            {% if status == 'Found' %}
+                                                <i class="fas fa-check-circle text-success fs-5"></i>
+                                            {% else %}
+                                                <i class="fas fa-times-circle text-danger fs-5 opacity-50"></i>
+                                            {% endif %}
+                                        </div>
+                                        {% endfor %}
+                                    </div>
+                                </div>
+
+                                <!-- AI Suggestions -->
+                                <div class="col-md-7">
+                                    <h5 class="fw-bold text-dark mb-3">
+                                        <i class="fas fa-sparkles text-warning me-2"></i>AI Suggestions
+                                    </h5>
+                                    <div class="ai-box">
+                                        <ul class="ai-list mb-0">
+                                            {% for suggestion in res.suggestions %}
+                                                <li>{{ suggestion }}</li>
+                                            {% endfor %}
+                                        </ul>
+                                    </div>
+                                </div>
+                            </div>
+
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+<script>
+    // Simple client-side filtering of result cards
+    (function () {
+        const filterButtons = document.querySelectorAll('[data-filter]');
+        const cards = document.querySelectorAll('.resume-card');
+
+        if (!filterButtons.length || !cards.length) return;
+
+        filterButtons.forEach(btn => {
+            btn.addEventListener('click', () => {
+                const filter = btn.getAttribute('data-filter');
+
+                // Toggle active state
+                filterButtons.forEach(b => b.classList.remove('active'));
+                btn.classList.add('active');
+
+                // Show / hide cards
+                cards.forEach(card => {
+                    const category = card.getAttribute('data-score-category');
+                    if (filter === 'all' || category === filter) {
+                        card.closest('.col-12').classList.remove('d-none');
+                    } else {
+                        card.closest('.col-12').classList.add('d-none');
+                    }
+                });
+            });
+        });
+    })();
+</script>
+</body>
+</html>

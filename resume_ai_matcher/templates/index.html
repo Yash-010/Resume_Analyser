@@ -1,0 +1,172 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AI Powered Resume Matcher</title>
+    
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    
+    <!-- Bootstrap CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    
+    <!-- FontAwesome -->
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    
+    <!-- Custom CSS -->
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+</head>
+<body class="hero-bg">
+
+<div class="container mt-5 pt-4 pb-5">
+    <div class="row justify-content-center">
+        <div class="col-lg-10 col-xl-9">
+            <div class="text-center mb-4 fade-in-up">
+                <div class="d-inline-block bg-white text-primary px-3 py-1 rounded-pill fw-bold mb-3 shadow-sm border border-light">
+                    <i class="fas fa-bolt text-warning me-1"></i> AI-Powered Matching
+                </div>
+                <h1 class="display-5 fw-bold text-white text-shadow-sm mb-2">Resume AI Matcher</h1>
+                <p class="lead text-white-50 mb-3">Compare multiple resumes at once and get a full analysis for each candidate.</p>
+                <p class="text-white-50 small mb-0">Paste one job description, upload as many PDF resumes as you like — we rank them and show match score, skills gap, structure, and AI suggestions for every resume.</p>
+            </div>
+
+            <!-- How it works strip -->
+            <div class="row g-3 mb-4 fade-in-up delay-1">
+                <div class="col-md-4">
+                    <div class="glass-card border-0 rounded-4 h-100 px-3 py-3 d-flex align-items-center">
+                        <div class="me-3 text-primary fs-3">
+                            <i class="fas fa-clipboard-list"></i>
+                        </div>
+                        <div>
+                            <div class="fw-semibold text-dark">1. Paste job description</div>
+                            <div class="small text-muted">Include responsibilities and required skills for best results.</div>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-4">
+                    <div class="glass-card border-0 rounded-4 h-100 px-3 py-3 d-flex align-items-center">
+                        <div class="me-3 text-warning fs-3">
+                            <i class="fas fa-file-upload"></i>
+                        </div>
+                            <div>
+                                <div class="fw-semibold text-dark">2. Upload PDF resumes</div>
+                                <div class="small text-muted">Drag in one or many candidate resumes at once.</div>
+                            </div>
+                    </div>
+                </div>
+                <div class="col-md-4">
+                    <div class="glass-card border-0 rounded-4 h-100 px-3 py-3 d-flex align-items-center">
+                        <div class="me-3 text-success fs-3">
+                            <i class="fas fa-ranking-star"></i>
+                        </div>
+                        <div>
+                            <div class="fw-semibold text-dark">3. Review ranked results</div>
+                            <div class="small text-muted">See top matches, missing skills, and AI suggestions.</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="card glass-card border-0 rounded-4 mt-3 fade-in-up delay-1">
+                <div class="card-body p-sm-5 p-4">
+                    <div class="d-flex justify-content-between align-items-start mb-4 flex-wrap gap-2">
+                        <div>
+                            <h2 class="h4 fw-bold mb-1 text-dark">Compare multiple resumes</h2>
+                            <p class="mb-0 text-muted small">One job description, many resumes — each gets a full analysis and ranking.</p>
+                        </div>
+                        <div class="badge bg-primary-subtle text-primary-emphasis rounded-pill px-3 py-2 fw-semibold">
+                            <i class="fas fa-shield-alt me-1"></i> No long-term storage
+                        </div>
+                    </div>
+                    
+                    {% with messages = get_flashed_messages(with_categories=true) %}
+                      {% if messages %}
+                        {% for category, message in messages %}
+                          <div class="alert alert-{{ 'danger' if category == 'error' else 'success' }} alert-dismissible fade show modern-alert" role="alert">
+                            <i class="fas {{ 'fa-exclamation-circle' if category == 'error' else 'fa-check-circle' }} me-2"></i>
+                            {{ message }}
+                            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                          </div>
+                        {% endfor %}
+                      {% endif %}
+                    {% endwith %}
+
+                    <form action="/analyze" method="POST" enctype="multipart/form-data" id="uploadForm">
+                        <div class="mb-4 position-relative">
+                            <label for="job_description" class="form-label fw-bold text-dark mb-3">
+                                <i class="fas fa-briefcase text-primary me-2"></i>Job Description
+                            </label>
+                            <textarea class="form-control custom-input" id="job_description" name="job_description" rows="5" placeholder="Paste the full job posting here, including responsibilities and requirements..." required></textarea>
+                            <div class="form-text mt-2 text-muted small">
+                                Tip: richer descriptions (responsibilities + must-have / nice-to-have skills) produce more accurate rankings.
+                            </div>
+                        </div>
+                        
+                        <div class="mb-4">
+                            <label for="resumes" class="form-label fw-bold text-dark mb-3">
+                                <i class="fas fa-file-pdf text-danger me-2"></i>Upload Resumes
+                            </label>
+                            <div class="file-upload-wrapper position-relative">
+                                <div class="custom-file-input position-relative d-flex flex-column align-items-center justify-content-center text-center" style="min-height: 160px;">
+                                    <i class="fas fa-cloud-upload-alt fa-2x text-primary mb-2"></i>
+                                    <p class="mb-1 fw-semibold text-dark">Drag &amp; drop or select multiple PDF resumes</p>
+                                    <p class="mb-2 text-muted small">Add as many candidates as you want — each is analyzed and compared.</p>
+                                    <span class="badge bg-light text-muted border small fw-semibold">PDF only • up to 16MB each • compare 2 to 100+ resumes</span>
+                                    <input class="position-absolute top-0 start-0 w-100 h-100 opacity-0 cursor-pointer" type="file" id="resumes" name="resumes" accept=".pdf" multiple required>
+                                </div>
+                            </div>
+                            <div id="selectedFilesList" class="mt-3 small" style="display: none;"></div>
+                        </div>
+
+                        <div class="d-grid gap-2 mt-2">
+                            <button type="submit" class="btn btn-primary btn-lg btn-glow rounded-pill fw-bold py-3" id="submitBtn">
+                                <i class="fas fa-magic me-2"></i> Analyze Candidates
+                                <span class="spinner-border spinner-border-sm d-none ms-2" id="loadingSpinner" role="status" aria-hidden="true"></span>
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+            
+            <div class="text-center mt-4 text-white-50 fade-in-up delay-2 small">
+                <span class="me-3"><i class="fas fa-lock me-1"></i>No credentials or personal data are stored long-term.</span>
+                <span class="me-3"><i class="fas fa-robot me-1"></i>Powered by modern NLP and LLM techniques.</span>
+                <span><i class="fas fa-file-alt me-1"></i>Optimized for ATS-friendly PDF resumes.</span>
+            </div>
+            
+        </div>
+    </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+<script src="{{ url_for('static', filename='js/script.js') }}"></script>
+<script>
+    (function() {
+        var input = document.getElementById('resumes');
+        var listEl = document.getElementById('selectedFilesList');
+        if (!input || !listEl) return;
+
+        function updateList() {
+            var files = input.files;
+            if (files.length === 0) {
+                listEl.style.display = 'none';
+                listEl.innerHTML = '';
+                return;
+            }
+            listEl.style.display = 'block';
+            var html = '<span class="text-success fw-semibold"><i class="fas fa-check-circle me-1"></i>' + files.length + ' file(s) selected:</span> ';
+            var names = [];
+            for (var i = 0; i < files.length; i++) names.push(files[i].name);
+            html += '<span class="text-dark">' + names.join(', ') + '</span>';
+            listEl.innerHTML = html;
+        }
+
+        input.addEventListener('change', updateList);
+        input.addEventListener('drag', updateList);
+    })();
+</script>
+</body>
+</html>

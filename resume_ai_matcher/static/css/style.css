@@ -1,0 +1,258 @@
+/* Base Variables & Settings */
+:root {
+    --primary: #4F46E5;
+    --primary-light: #818CF8;
+    --primary-dark: #3730A3;
+    --secondary: #10B981;
+    --dark: #1F2937;
+    --light: #F3F4F6;
+    --font-family: 'Plus Jakarta Sans', sans-serif;
+}
+
+body {
+    font-family: var(--font-family);
+    -webkit-font-smoothing: antialiased;
+    color: var(--dark);
+}
+
+.bg-gray-50 {
+    background-color: #F9FAFB;
+}
+
+/* Typography Customizations */
+h1, h2, h3, h4, h5, h6 {
+    letter-spacing: -0.02em;
+}
+
+.tracking-wide {
+    letter-spacing: 0.05em;
+}
+
+.max-w-700 {
+    max-width: 700px;
+}
+
+.text-shadow-sm {
+    text-shadow: 0 2px 4px rgba(0,0,0,0.1);
+}
+
+/* Background Gradients */
+.hero-bg {
+    background: linear-gradient(135deg, #4F46E5 0%, #7C3AED 50%, #2563EB 100%);
+    background-attachment: fixed;
+    min-height: 100vh;
+}
+
+.bg-primary-gradient {
+    background: linear-gradient(135deg, var(--primary) 0%, var(--primary-dark) 100%);
+}
+
+/* Glassmorphism Components */
+.glass-card {
+    background: rgba(255, 255, 255, 0.95);
+    backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
+    box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
+}
+
+/* Inputs & Form Elements */
+.custom-input {
+    border: 2px solid #E5E7EB;
+    border-radius: 0.75rem;
+    padding: 1rem;
+    font-size: 1rem;
+    transition: all 0.3s ease;
+    background-color: #F9FAFB;
+}
+
+.custom-input:focus {
+    border-color: var(--primary);
+    box-shadow: 0 0 0 4px rgba(79, 70, 229, 0.1);
+    background-color: #FFFFFF;
+}
+
+.file-upload-wrapper {
+    position: relative;
+}
+
+.custom-file-input {
+    border: 2px dashed #CBD5E1;
+    border-radius: 0.75rem;
+    padding: 1.5rem 1rem;
+    background-color: #F8FAFC;
+    transition: all 0.3s ease;
+    cursor: pointer;
+}
+
+.custom-file-input:hover {
+    border-color: var(--primary-light);
+    background-color: #F1F5F9;
+}
+
+.btn-glow {
+    box-shadow: 0 10px 25px -5px rgba(79, 70, 229, 0.4);
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
+    background-color: var(--primary);
+    border: none;
+}
+
+.btn-glow:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 15px 30px -5px rgba(79, 70, 229, 0.6);
+    background-color: var(--primary-dark);
+}
+
+/* Resume Cards */
+.resume-card {
+    box-shadow: 0 10px 30px rgba(0,0,0,0.05);
+    transition: transform 0.3s ease, box-shadow 0.3s ease;
+}
+
+.resume-card:hover {
+    transform: translateY(-8px);
+    box-shadow: 0 20px 40px rgba(0,0,0,0.1);
+}
+
+/* Rank Ribbon */
+.rank-ribbon {
+    position: absolute;
+    top: 20px;
+    left: -10px;
+    padding: 8px 20px 8px 15px;
+    font-weight: 800;
+    color: white;
+    font-size: 1.2rem;
+    border-radius: 0 50px 50px 0;
+    box-shadow: 0 4px 10px rgba(0,0,0,0.15);
+    z-index: 10;
+}
+
+.rank-ribbon::after {
+    content: '';
+    position: absolute;
+    bottom: -10px;
+    left: 0;
+    border-top: 10px solid rgba(0,0,0,0.3);
+    border-left: 10px solid transparent;
+}
+
+.rank-ribbon.gold { background: linear-gradient(135deg, #FCD34D, #F59E0B); }
+.rank-ribbon.silver { background: linear-gradient(135deg, #E2E8F0, #94A3B8); color: #1E293B; }
+.rank-ribbon.bronze { background: linear-gradient(135deg, #FDBA74, #EA580C); }
+.rank-ribbon.standard { background: #64748B; }
+
+/* Score Circle */
+.score-circle-wrapper {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+
+.score-circle {
+    width: 120px;
+    height: 120px;
+    border-radius: 50%;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    background: rgba(255,255,255,0.1);
+    border: 8px solid;
+    box-shadow: 0 0 20px rgba(0,0,0,0.1) inset;
+    position: relative;
+}
+
+.score-circle.excellent { border-color: #34D399; color: #34D399; text-shadow: 0 0 10px rgba(52, 211, 153, 0.5); }
+.score-circle.good { border-color: #FBBF24; color: #FBBF24; text-shadow: 0 0 10px rgba(251, 191, 36, 0.5); }
+.score-circle.poor { border-color: #F87171; color: #F87171; text-shadow: 0 0 10px rgba(248, 113, 113, 0.5); }
+
+.score-number {
+    font-size: 2.5rem;
+    font-weight: 800;
+}
+
+.score-number small {
+    font-size: 1.2rem;
+    font-weight: 600;
+}
+
+/* Badges */
+.modern-badge {
+    padding: 0.5rem 1rem;
+    border-radius: 50px;
+    font-size: 0.85rem;
+    font-weight: 600;
+    letter-spacing: 0.02em;
+    display: inline-flex;
+    align-items: center;
+}
+
+.badge-success { background-color: #ECFDF5; color: #059669; border: 1px solid #A7F3D0; }
+.badge-danger { background-color: #FEF2F2; color: #DC2626; border: 1px solid #FECACA; }
+
+/* Section Grid */
+.section-grid {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 0.75rem;
+}
+
+.section-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    background: #F8FAFC;
+    padding: 0.75rem 1.25rem;
+    border-radius: 0.75rem;
+    border: 1px solid #E2E8F0;
+}
+
+/* AI Suggestions Box */
+.ai-box {
+    background: linear-gradient(145deg, #EFF6FF, #DBEAFE);
+    border: 1px solid #BFDBFE;
+    border-radius: 1rem;
+    padding: 1.5rem;
+    height: 100%;
+}
+
+.ai-list {
+    list-style: none;
+    padding: 0;
+}
+
+.ai-list li {
+    position: relative;
+    padding-left: 1.75rem;
+    margin-bottom: 0.75rem;
+    color: #1E3A8A;
+    font-weight: 500;
+    font-size: 0.95rem;
+    line-height: 1.5;
+}
+
+.ai-list li::before {
+    content: '\f058'; /* FontAwesome check-circle */
+    font-family: 'Font Awesome 6 Free';
+    font-weight: 900;
+    position: absolute;
+    left: 0;
+    top: 0.2rem;
+    color: #3B82F6;
+}
+
+/* Animations */
+.fade-in-up {
+    animation: fadeInUp 0.6s ease forwards;
+    opacity: 0;
+    transform: translateY(20px);
+}
+
+.delay-1 { animation-delay: 0.2s; }
+.delay-2 { animation-delay: 0.4s; }
+
+@keyframes fadeInUp {
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
