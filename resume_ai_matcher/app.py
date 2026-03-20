@@ -5,9 +5,18 @@ from io import StringIO
 import csv
 from utils.text_extractor import extract_text_from_pdf
 from utils.similarity_engine import calculate_similarity
-from utils.keyword_analyzer import extract_and_compare_keywords
-from utils.resume_section_analyzer import analyze_sections
-from utils.ai_suggestions import generate_resume_suggestions
+from utils.keyword_analyzer import (
+    extract_and_compare_keywords,
+    extract_top_skills,
+)
+from utils.resume_section_analyzer import analyze_sections, compute_completeness_score
+from utils.ai_suggestions import (
+    generate_resume_suggestions,
+    generate_learning_path,
+    generate_interview_questions,
+)
+from utils.ats_checker import analyze_ats_compatibility
+from utils.scoring import compute_scores
 from config import config
 
 app = Flask(__name__)
@@ -19,6 +28,32 @@ app.config["MAX_CONTENT_LENGTH"] = config.MAX_CONTENT_LENGTH
 # Ensure upload directory exists
 os.makedirs(app.config["UPLOAD_FOLDER"], exist_ok=True)
 
+
+def extract_candidate_name(resume_text: str) -> str:
+    """
+    Very lightweight heuristic to infer candidate name from resume text.
+    """
+    if not resume_text:
+        return ""
+
+    lines = [l.strip() for l in resume_text.splitlines() if l.strip()]
+    if not lines:
+        return ""
+
+    # Prefer an explicit "Name:" field if present
+    for line in lines[:10]:
+        if line.lower().startswith("name:"):
+            return line.split(":", 1)[1].strip()
+
+    # Otherwise, take the first non-empty line that doesn't look like contact info
+    for line in lines[:10]:
+        lower = line.lower()
+        if any(x in lower for x in ["email", "phone", "linkedin", "@"]):
+            continue
+        if len(line.split()) <= 5:
+            return line
+
+    return ""
 
 def allowed_file(filename):
     return (
@@ -48,6 +83,7 @@ def analyze():
         return redirect(url_for('index'))
         
     results = []
+    jd_top_skills = extract_top_skills(job_description)
     
     for file in files:
         if file and allowed_file(file.filename):
@@ -60,12 +96,6 @@ def analyze():
                 resume_text = extract_text_from_pdf(f)
 
             # Per-resume safety: allow partial failures
-            try:
-                score = calculate_similarity(resume_text, job_description)
-            except Exception as e:
-                print(f"Error calculating similarity for {filename}: {e}")
-                score = 0.0
-
             try:
                 matched, missing, importance = extract_and_compare_keywords(
                     resume_text, job_description
@@ -84,6 +114,20 @@ def analyze():
                 print(f"Error analyzing sections for {filename}: {e}")
                 sections = {}
 
+            # Compute ATS compatibility
+            ats_score, ats_issues = analyze_ats_compatibility(resume_text, sections)
+
+            # Compute multi-factor scores
+            score_components = compute_scores(
+                resume_text,
+                job_description,
+                sections,
+                matched,
+                missing,
+                jd_top_skills,
+            )
+
+            # AI-based enhancements
             try:
                 suggestions = generate_resume_suggestions(
                     resume_text, job_description, missing
@@ -95,15 +139,38 @@ def analyze():
                     "Focus on aligning your skills and experience more closely with the job description.",
                 ]
 
+            try:
+                learning_path = generate_learning_path(missing)
+            except Exception as e:
+                print(f"Error generating learning path for {filename}: {e}")
+                learning_path = []
+
+            try:
+                interview_questions = generate_interview_questions(
+                    resume_text, job_description
+                )
+            except Exception as e:
+                print(f"Error generating interview questions for {filename}: {e}")
+                interview_questions = []
+
             results.append(
                 {
                     "filename": filename,
-                    "score": score,
+                    "candidate_name": extract_candidate_name(resume_text),
+                    "score": score_components["final_score"],
+                    "score_breakdown": score_components,
                     "matched_skills": matched,
                     "missing_skills": missing,
                     "keyword_importance": importance,
                     "sections": sections,
+                    "resume_completeness": compute_completeness_score(sections),
+                    "ats_score": ats_score,
+                    "ats_issues": ats_issues,
                     "suggestions": suggestions,
+                    "learning_path": learning_path,
+                    "interview_questions": interview_questions,
+                    # raw text could be used for UI heatmaps; keep for now
+                    "resume_text": resume_text,
                 }
             )
 
@@ -121,8 +188,14 @@ def analyze():
     for index, res in enumerate(results):
         res["rank"] = index + 1
 
+    recommended_candidate = results[0] if results else None
+
     return render_template(
-        "results.html", results=results, job_description=job_description
+        "results.html",
+        results=results,
+        job_description=job_description,
+        top_required_skills=jd_top_skills,
+        recommended_candidate=recommended_candidate,
     )
 
 

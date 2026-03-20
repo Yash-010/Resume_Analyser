@@ -1,80 +1,178 @@
 import re
-from sklearn.feature_extraction.text import TfidfVectorizer
+from typing import Dict, Iterable, List, Set, Tuple
 import nltk
 from nltk.corpus import stopwords
 
 # Ensure stopwords are downloaded
 try:
-    nltk.data.find('corpora/stopwords')
+    nltk.data.find("corpora/stopwords")
 except LookupError:
-    nltk.download('stopwords', quiet=True)
+    nltk.download("stopwords", quiet=True)
 
-def _get_stopwords_set():
+
+def _get_stopwords_set() -> Set[str]:
     try:
-        return set(stopwords.words('english'))
+        return set(stopwords.words("english"))
     except LookupError:
         # If NLTK data isn't available (common with SSL/cert issues),
         # continue without stopword filtering instead of crashing.
         return set()
 
-def extract_and_compare_keywords(resume_text, job_description):
-    """
-    Extract keywords from the job description and compare them with the resume.
-    Returns matched, missing, and categorized keyword importance levels.
-    """
-    stop_words = _get_stopwords_set()
-    
-    def tokenize(text):
-        text = text.lower()
-        text = re.sub(r'[^a-z\s]', '', text)
-        return [w for w in text.split() if w not in stop_words and len(w) > 2]
-    
-    jd_tokens = tokenize(job_description)
-    resume_tokens = set(tokenize(resume_text))
-    
-    if not jd_tokens:
-        return [], [], {"High Importance": [], "Medium Importance": [], "Low Importance": []}
-        
-    jd_sentences = [s.strip() for s in re.split(r'[.!?\n]', job_description) if len(s.strip()) > 10]
-    if not jd_sentences:
-        jd_sentences = [job_description]
-        
-    vectorizer = TfidfVectorizer(stop_words='english')
-    try:
-        tfidf_matrix = vectorizer.fit_transform(jd_sentences)
-        feature_names = vectorizer.get_feature_names_out()
-        
-        # Calculate max or average TF-IDF score for each word
-        scores = tfidf_matrix.mean(axis=0).A1
-        keyword_scores = dict(zip(feature_names, scores))
-    except ValueError:
-        # Fallback if TF-IDF fails
-        keyword_scores = {word: 1.0 for word in set(jd_tokens)}
-        feature_names = list(set(jd_tokens))
 
-    # Sort keywords by their score
-    sorted_keywords = sorted(keyword_scores.items(), key=lambda x: x[1], reverse=True)
-    top_keywords = [kw[0] for kw in sorted_keywords[:min(30, len(sorted_keywords))]] # Top 30 words
-    
-    # If no top keywords derived via TFIDF, use frequency
-    if not top_keywords:
-        from collections import Counter
-        freq = Counter(jd_tokens)
-        top_keywords = [w for w, _ in freq.most_common(30)]
-    
-    matched_keywords = [kw for kw in top_keywords if kw in resume_tokens]
-    missing_keywords = [kw for kw in top_keywords if kw not in resume_tokens]
-    
-    # Categorize into High, Medium, Low Importance
-    n = len(top_keywords)
-    high_imp = top_keywords[:max(1, n//3)]
-    med_imp = top_keywords[max(1, n//3) : max(2, 2*n//3)]
-    low_imp = top_keywords[max(2, 2*n//3):]
-    
+# Curated skill vocabulary (can be extended or loaded from external file)
+BASE_SKILLS: Set[str] = {
+    # Core programming / data stack
+    "python",
+    "r",
+    "java",
+    "c++",
+    "sql",
+    "nosql",
+    "pandas",
+    "numpy",
+    "scipy",
+    "matplotlib",
+    "seaborn",
+    "excel",
+    # ML / AI
+    "machine learning",
+    "deep learning",
+    "artificial intelligence",
+    "ai",
+    "ml",
+    "nlp",
+    "natural language processing",
+    "computer vision",
+    "recommendation systems",
+    "time series",
+    "reinforcement learning",
+    # Libraries / frameworks
+    "scikit-learn",
+    "sklearn",
+    "tensorflow",
+    "keras",
+    "pytorch",
+    "spark",
+    "hadoop",
+    "pyspark",
+    "airflow",
+    "dbt",
+    # BI / viz
+    "tableau",
+    "power bi",
+    "looker",
+    "data studio",
+    "superset",
+    # Cloud / devops
+    "aws",
+    "azure",
+    "gcp",
+    "docker",
+    "kubernetes",
+    "k8s",
+    # Data / statistics
+    "statistics",
+    "probability",
+    "hypothesis testing",
+    "a/b testing",
+    "data analysis",
+    "data analytics",
+    "data engineering",
+    "data visualization",
+}
+
+# Normalization mapping to unify aliases, acronyms, and variations
+SKILL_NORMALIZATION_MAP: Dict[str, str] = {
+    "ml": "machine learning",
+    "ai": "artificial intelligence",
+    "sklearn": "scikit-learn",
+    "data analytics": "data analysis",
+    "data scientist": "data science",
+    "k8s": "kubernetes",
+}
+
+
+def _normalize_skill(skill: str) -> str:
+    s = skill.strip().lower()
+    return SKILL_NORMALIZATION_MAP.get(s, s)
+
+
+def _normalize_vocab(skills: Iterable[str]) -> Set[str]:
+    return {_normalize_skill(s) for s in skills}
+
+
+NORMALIZED_SKILLS: Set[str] = _normalize_vocab(BASE_SKILLS)
+
+
+def _find_skills_in_text(text: str) -> Set[str]:
+    """
+    Detect skills from the curated vocabulary inside arbitrary text.
+    Uses simple case-insensitive phrase matching for now.
+    """
+    lowered = text.lower()
+    found: Set[str] = set()
+
+    for raw_skill in NORMALIZED_SKILLS:
+        # Match as a phrase, respecting word boundaries where possible.
+        pattern = r"\b" + re.escape(raw_skill) + r"\b"
+        if re.search(pattern, lowered):
+            found.add(raw_skill)
+
+    return found
+
+
+def extract_top_skills(job_description: str, max_skills: int = 20) -> List[str]:
+    """
+    Extract top required skills from the job description text
+    using the curated skill vocabulary.
+    """
+    jd_skills = list(_find_skills_in_text(job_description))
+
+    # Preserve original order of appearance in the JD
+    ordered: List[str] = []
+    text = job_description.lower()
+    for skill in jd_skills:
+        idx = text.find(skill)
+        if idx != -1:
+            ordered.append((idx, skill))
+
+    ordered.sort(key=lambda x: x[0])
+    skills = [s for _, s in ordered]
+    return skills[:max_skills]
+
+
+def extract_and_compare_keywords(
+    resume_text: str, job_description: str
+) -> Tuple[List[str], List[str], Dict[str, List[str]]]:
+    """
+    Compare resume skills vs. JD skills using a curated vocabulary.
+
+    Returns:
+        matched_skills: list of normalized skills found in both JD and resume
+        missing_skills: list of normalized skills present in JD but not resume
+        importance_levels: dict with High / Medium / Low groupings of JD skills
+    """
+    jd_skills = extract_top_skills(job_description, max_skills=30)
+    resume_skills = _find_skills_in_text(resume_text)
+
+    if not jd_skills:
+        empty = {"High Importance": [], "Medium Importance": [], "Low Importance": []}
+        return [], [], empty
+
+    matched = [s for s in jd_skills if s in resume_skills]
+    missing = [s for s in jd_skills if s not in resume_skills]
+
+    # Importance buckets based on ordering in the JD
+    n = len(jd_skills)
+    high_imp = jd_skills[: max(1, n // 3)]
+    med_imp = jd_skills[max(1, n // 3) : max(2, 2 * n // 3)]
+    low_imp = jd_skills[max(2, 2 * n // 3) : ]
+
     importance_levels = {
         "High Importance": high_imp,
         "Medium Importance": med_imp,
-        "Low Importance": low_imp
+        "Low Importance": low_imp,
     }
-    
-    return matched_keywords, missing_keywords, importance_levels
+
+    return matched, missing, importance_levels
+

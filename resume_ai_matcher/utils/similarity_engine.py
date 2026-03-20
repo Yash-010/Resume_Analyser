@@ -1,8 +1,7 @@
+import os
 import re
-from sklearn.metrics.pairwise import cosine_similarity
 import nltk
 from nltk.corpus import stopwords
-import numpy as np
 from config import config
 
 # Ensure stopwords are downloaded beforehand
@@ -10,6 +9,24 @@ try:
     nltk.data.find('corpora/stopwords')
 except LookupError:
     nltk.download('stopwords', quiet=True)
+
+_EMBEDDING_MODEL = None
+
+
+def _get_embedding_model():
+    global _EMBEDDING_MODEL
+    if _EMBEDDING_MODEL is not None:
+        return _EMBEDDING_MODEL
+
+    from sentence_transformers import SentenceTransformer
+
+    model_name = os.getenv(
+        "RESUME_MATCHER_EMBEDDING_MODEL",
+        "all-MiniLM-L6-v2",
+    )
+    _EMBEDDING_MODEL = SentenceTransformer(model_name)
+    return _EMBEDDING_MODEL
+
 
 def _get_stopwords_set():
     try:
@@ -46,17 +63,15 @@ def calculate_similarity(resume_text, job_description):
     # Try semantic embeddings first if enabled
     if config.ENABLE_EMBEDDING_MATCH:
         try:
-            from sentence_transformers import SentenceTransformer
+            from sentence_transformers import util
 
-            # A small, general-purpose model; changeable via env if needed
-            model_name = os.getenv(
-                "RESUME_MATCHER_EMBEDDING_MODEL",
-                "all-MiniLM-L6-v2",
-            )
-            model = SentenceTransformer(model_name)
-            embeddings = model.encode([clean_resume, clean_jd])
-            sim_matrix = cosine_similarity([embeddings[0]], [embeddings[1]])
-            base_score = float(sim_matrix[0][0]) * 100
+            model = _get_embedding_model()
+
+            # normalize_embeddings=True makes cosine similarity == dot product
+            resume_emb = model.encode(clean_resume, normalize_embeddings=True)
+            jd_emb = model.encode(clean_jd, normalize_embeddings=True)
+
+            base_score = float(util.dot_score(resume_emb, jd_emb).item()) * 100.0
             score = max(0.0, min(base_score, 100.0))
             return round(score, 2)
         except Exception as _:
@@ -65,6 +80,7 @@ def calculate_similarity(resume_text, job_description):
 
     # Fallback: traditional bag-of-words similarity
     from sklearn.feature_extraction.text import CountVectorizer
+    from sklearn.metrics.pairwise import cosine_similarity
 
     vectorizer = CountVectorizer(stop_words="english", ngram_range=(1, 2))
     try:
