@@ -366,19 +366,27 @@
                             </div>
 
                             <!-- AI Suggestions section -->
-                            <div class="analysis-card p-4 mt-4">
+                            <div class="analysis-card p-4 mt-4" style="background: linear-gradient(145deg, #f8faff, #eff6ff); border: 1px solid #e0e7ff;">
                                 <h5 class="fw-bold text-dark mb-3">
                                     <i class="fas fa-sparkles text-warning me-2"></i>AI Suggestions & Guidance
                                 </h5>
                                 <div class="row g-4">
                                     <div class="col-lg-6">
-                                        <div class="ai-box mb-0">
-                                            <ul class="ai-list mb-0">
+                                        <div class="expandable-container" id="aiContainer-res-{{ loop.index }}">
+                                            <div class="ai-content">
                                                 {% for suggestion in res.suggestions %}
-                                                    <li>{{ suggestion }}</li>
+                                                    {% if suggestion and (suggestion[0].isdigit() or suggestion.isupper() or suggestion.startswith("Professional") or suggestion.startswith("Experience") or suggestion.startswith("Skills") or suggestion.startswith("Projects")) %}
+                                                        <p class="ai-header"><i class="fas fa-bolt text-warning me-2 align-middle fs-6"></i>{{ suggestion }}</p>
+                                                    {% else %}
+                                                        <p class="ai-bullet">{{ suggestion }}</p>
+                                                    {% endif %}
                                                 {% endfor %}
-                                            </ul>
+                                            </div>
+                                            <div class="expandable-overlay"></div>
                                         </div>
+                                        <button class="btn-view-more" onclick="var c=document.getElementById('aiContainer-res-{{ loop.index }}'); c.classList.toggle('expanded'); this.innerHTML=c.classList.contains('expanded') ? 'View Less <i class=\'fas fa-chevron-up ms-1\'></i>' : 'View More <i class=\'fas fa-chevron-down ms-1\'></i>';">
+                                            View More <i class="fas fa-chevron-down ms-1"></i>
+                                        </button>
                                     </div>
                                     <div class="col-lg-6">
                                         {% if res.learning_path %}

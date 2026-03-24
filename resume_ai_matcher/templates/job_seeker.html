@@ -1,0 +1,96 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Job Seeker - Resume Matcher</title>
+
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+
+    <!-- Bootstrap CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+
+    <!-- FontAwesome -->
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+
+    <!-- Custom CSS -->
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+</head>
+<body class="hero-bg pb-5">
+
+<nav class="navbar navbar-expand-lg bg-white shadow-sm py-3 mb-5">
+    <div class="container">
+        <a class="navbar-brand fw-bold text-primary" href="/">
+            <i class="fas fa-bolt text-warning me-2"></i>AI Resume Matcher
+        </a>
+        <div class="d-flex gap-2">
+            <a href="/recruiter" class="btn btn-light rounded-pill px-4 fw-medium border">
+                <i class="fas fa-briefcase me-2"></i>Recruiter Mode
+            </a>
+        </div>
+    </div>
+</nav>
+
+<div class="container mt-3">
+    <div class="mb-4 p-4 rounded-4 mx-auto" style="max-width: 980px;">
+        <div class="text-center">
+            <h1 class="display-6 fw-bold text-white mb-1">Optimize Your Resume</h1>
+            <p class="text-white-50 mb-0">Upload one PDF resume and get match score, ATS score, completeness, and AI improvements.</p>
+        </div>
+    </div>
+
+    <div class="card glass-card border-0 rounded-4 mx-auto" style="max-width: 980px;">
+        <div class="card-body p-sm-5 p-4">
+            <div class="row g-4 align-items-start">
+                <div class="col-12">
+                    <div id="jobSeekerError" class="alert alert-danger d-none" role="alert"></div>
+
+                    <form id="jobSeekerForm" action="/job-seeker/analyze" method="POST" enctype="multipart/form-data">
+                        <div class="mb-4">
+                            <label for="resume" class="form-label fw-bold text-dark mb-3">
+                                <i class="fas fa-file-pdf text-danger me-2"></i>Resume (PDF)
+                            </label>
+                            <div class="custom-file-input position-relative d-flex flex-column align-items-center justify-content-center text-center" style="min-height: 140px;">
+                                <i class="fas fa-cloud-upload-alt fa-2x text-primary mb-2"></i>
+                                <p class="mb-1 fw-semibold text-dark">Select one PDF resume</p>
+                                <p class="mb-2 text-muted small">Only PDF files are supported</p>
+                                <input class="position-absolute top-0 start-0 w-100 h-100 opacity-0 cursor-pointer"
+                                       type="file" id="resume" name="resume" accept=".pdf" required>
+                            </div>
+                            <div id="resumeUploadStatus" class="mt-2 d-none">
+                                <span class="badge bg-success text-white rounded-pill px-3 py-2 fw-semibold">
+                                    <i class="fas fa-check me-2"></i>PDF uploaded successfully
+                                </span>
+                                <div id="resumeUploadFilename" class="small text-muted mt-2"></div>
+                            </div>
+                        </div>
+
+                        <div class="mb-4">
+                            <label for="job_description" class="form-label fw-bold text-dark mb-3">
+                                <i class="fas fa-briefcase text-primary me-2"></i>Job Description
+                            </label>
+                            <textarea class="form-control custom-input" id="job_description" name="job_description" rows="6"
+                                      placeholder="Paste the full job posting here, including responsibilities and required skills..." required></textarea>
+                        </div>
+
+                        <div class="d-grid gap-2">
+                            <button type="submit" class="btn btn-primary btn-lg btn-glow rounded-pill fw-bold py-3" id="jobSeekerSubmit">
+                                <i class="fas fa-magic me-2"></i> Analyze My Resume
+                                <span class="spinner-border spinner-border-sm ms-2 d-none" id="jobSeekerSpinner" role="status" aria-hidden="true"></span>
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+<script src="{{ url_for('static', filename='js/job_seeker.js') }}"></script>
+</body>
+</html>
+

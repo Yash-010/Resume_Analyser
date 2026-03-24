@@ -55,6 +55,16 @@ h1, h2, h3, h4, h5, h6 {
     box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
 }
 
+/* Mode selection cards */
+.mode-card {
+    transition: transform 0.18s ease, box-shadow 0.18s ease, border-color 0.18s ease;
+}
+
+.mode-card:hover {
+    transform: translateY(-6px);
+    box-shadow: 0 20px 45px rgba(15, 23, 42, 0.15);
+}
+
 /* Inputs & Form Elements */
 .custom-input {
     border: 2px solid #E5E7EB;
@@ -294,4 +304,90 @@ h1, h2, h3, h4, h5, h6 {
         opacity: 1;
         transform: translateY(0);
     }
+}
+
+/* AI Suggestions New Eye-Catchy UI */
+.ai-content p {
+    margin-bottom: 0.6rem;
+    line-height: 1.6;
+    color: #374151;
+    font-size: 0.95rem;
+}
+
+.ai-content p.ai-header {
+    font-weight: 800;
+    color: #1E3A8A;
+    margin-top: 1.5rem;
+    font-size: 1.1rem;
+    letter-spacing: 0.02em;
+    padding-bottom: 0.25rem;
+    border-bottom: 1px dashed #BFDBFE;
+}
+
+.ai-content p.ai-header:first-child {
+    margin-top: 0;
+}
+
+.ai-content p.ai-bullet {
+    position: relative;
+    padding-left: 1.7rem;
+    margin-left: 0.5rem;
+}
+
+.ai-content p.ai-bullet::before {
+    content: '\f058';
+    font-family: 'Font Awesome 6 Free';
+    font-weight: 900;
+    position: absolute;
+    left: 0;
+    top: 0.2rem;
+    color: #3B82F6;
+}
+
+.expandable-container {
+    position: relative;
+    max-height: 220px;
+    overflow: hidden;
+    transition: max-height 0.4s ease;
+}
+
+.expandable-container.expanded {
+    max-height: 5000px;
+}
+
+.expandable-overlay {
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    width: 100%;
+    height: 80px;
+    background: linear-gradient(to bottom, rgba(239, 246, 255, 0), rgba(239, 246, 255, 1));
+    pointer-events: none;
+    transition: opacity 0.3s ease;
+}
+
+.expanded .expandable-overlay {
+    opacity: 0;
+}
+
+.btn-view-more {
+    display: table;
+    margin: 1.5rem auto 0;
+    padding: 0.5rem 1.75rem;
+    background: #fff;
+    border: 1px solid #BFDBFE;
+    color: #2563EB;
+    border-radius: 50px;
+    font-weight: 700;
+    font-size: 0.9rem;
+    cursor: pointer;
+    box-shadow: 0 4px 10px rgba(37, 99, 235, 0.08);
+    transition: all 0.2s ease;
+}
+
+.btn-view-more:hover {
+    background: #2563EB;
+    color: #fff;
+    transform: translateY(-2px);
+    box-shadow: 0 6px 15px rgba(37, 99, 235, 0.2);
 }
